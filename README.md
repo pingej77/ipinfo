@@ -6,6 +6,5 @@ May add new info, improve display or information, or make it more efficient in t
 
 Configuring:
 You'll want to download the file and place it in /usr/local/bin/ or any other folder in $PATH
-Then, you can create an alias for it to make it easier to call; I use ipa (meaning ip-all)
-  Do so by adding the following to the .bashrc file in the user's home folder:
-            alias ipa='ipconfig.sh'
+You can remove the .sh file extension or give the file an alias in your .bashrc file in order to make it easier to call.
+Feel free to rename it if you'd like
