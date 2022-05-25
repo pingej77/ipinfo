@@ -37,14 +37,15 @@ do
 	printf "${reset}${fmt_MAC}$if_info" | sed -n ${i}p | sed 's/<BROADCAST.*//'
 	#puts interface line into a variable
 	line_ip=$(printf "$ip_info" | sed -n ${i}p)
+	printf "\n"
 	#if blank (no ip address for this interface), skip formatting
 	if [[ ! $line_ip =~ [^[:space:]] ]]
 	then
 		continue
 	else
-		printf "${fmt_IP}\nIPv4\t\t\t\t"
+		printf "${fmt_IP}IPv4\t\t\t\t"
 		#This line is quite long and simply has to do with the formatting of the IP addresses and labelling of each ipv6 address type
-		printf "$line_ip" | sed -e 's/ /\nIPv6\t\t\t\t/g' -e 's/\t\t\tfe80/ link-local\t\tfe80/g' -e 's/\t\t\t2/ global\t\t\t2/g' -e 's/\t\t\tfc/ (ULA)\t\t\tfc/g' -e 's/\t\t\tfd/ (ULA)\t\t\tfd/g' | sed '$d'
+		printf "$line_ip" | sed -e 's/ /\nIPv6\t\t\t\t/g' -e 's/\t\tfe80/ link-local\tfe80/g' -e 's/\t\t2/ global\t\t2/g' -e 's/\t\tfc/ (ULA)\t\tfc/g' -e 's/\t\tfd/ (ULA)\t\tfd/g' | sed '$d'
 	fi
 	printf "\n"
 done
