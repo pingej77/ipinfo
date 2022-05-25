@@ -93,7 +93,7 @@ printf "$dns_info" | head -1 | nslookup | head -1 | sed -e 's/.*name = /\t\t/'	#
 printf "${fmt_IP}"
 printf "$dns_info" | tail -1	#print DNS 2
 printf "$fmt_DNS"
-printf "${fmt_DNS}$dns_info" | tail -1 | nslookup | head -1 | sed -e 's/.*name = /\t\t/'	#get DNS2 name
+printf "$dns_info" | tail -1 | nslookup | head -1 | sed -e 's/.*name = /\t\t/'	#get DNS2 name
 #reset formatting
 printf "${reset}\n"
 
