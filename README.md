@@ -14,6 +14,6 @@ For this you can use ipinfo, ipconfig, or anything else easy for you to type
 ## Changing Colors:
 Colors are defined in lines 3 through 9
 You can change the colors for a particular data type by changing the "tput setaf" value to any other value between 1 and 7.
-interface colors cycle through the colors, starting at white.  To change this, edit the $color variable on line 32
+The color of each interface heading cycles through the colors, starting at white.  To change this, edit the $color variable on line 32
 (colors may vary based on terminal settings)
 1=red, 2=green,3=yellow/orange, 4=blue, 5=purple, 6=teal/cyan, 7=white.  0 is BG color and will render text unreadable
