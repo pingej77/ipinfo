@@ -91,10 +91,11 @@ do
 		#labelling IPv6
 		elif [[ ${address[$j]} == *":"* ]]; then
 			printf "${fmt_IPv6}\tIPv6\t"
-			[[ ${address[$j]} == "fc"??":"* ]] && printf "ULA"	#ULA gets 2 tabs
-			[[ ${address[$j]} == "fd"??":"* ]] && printf "ULA"	#link-local gets 1, global 2
-			[[ ${address[$j]} == "fe80:"* ]] && printf "link-local" || printf "\t"
-			[[ ${address[$j]} == "20"??":"* ]] && printf "global\t" || printf "\t"
+			[[ ${address[$j]} == "fc"??":"* ]] && printf "ULA"	#ULA
+			[[ ${address[$j]} == "fd"??":"* ]] && printf "ULA"	#Unique local address
+			[[ ${address[$j]} == "2"???":"* ]] && printf "global"	#global address
+			[[ ${address[$j]} == "fe80:"* ]] && printf "link-local" || printf "\t"	#link-local +extra tab for non-link-local
+			printf "\n"	#each type gets 2 tabs, except link-local, which gets 1, due to its length
 		fi
 		#print IP address
 		echo -e "${address[$j]}"
