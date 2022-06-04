@@ -9,7 +9,7 @@ May add new info, improve display or information, or make it more efficient in t
 ## Configuring:
 You'll want to download the file and place it in /usr/local/bin/ or any other folder in $PATH
 
-You can remove the .sh file extension in order to make it easier to call.
+You can remove the .sh file extension in order to make it easier to call or rename it entirely.
 
 Alternatively, you can give it an alias in your .bashrc file
 
