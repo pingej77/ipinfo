@@ -24,6 +24,7 @@ You can change the colors for a particular data type by changing the "tput setaf
 The color of each interface heading cycles through 15 colors, starting at white.  To change this, edit the $color variable.
 
 1=red, 2=green, 3=yellow/orange, 4=blue, 5=purple, 6=teal/cyan, 7=white, 8=gray, 9=faded red, 10=light teal, 11=yellow, 12=light blue, 13=dark purple, 14=dark teal, 15=white
+
 0 is BG color and will render text unreadable.
 (colors may vary based on terminal settings)
 
