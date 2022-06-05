@@ -20,7 +20,7 @@ For this you can use ipinfo, ipconfig, or anything else easy for you to type
 ## Changing Colors:
 Colors are defined early in the script and are assigned based on data type.
 
-You can change the colors for a particular data type by changing the "tput setaf" value to any other value between 1 and 255.  By default, the colors use match those used for each data type by the ip command.
+You can change the colors for a particular data type by changing the "tput setaf" value to any other value between 1 and 255.  By default, the colors used match those used for each data type by the ip command.
 
 The color of each interface heading cycles through 15 colors, starting at white.  To change this, edit the $color variable.
 
