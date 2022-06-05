@@ -95,7 +95,7 @@ do
 			[[ ${address[$j]} == "fd"??":"* ]] && printf "ULA"	#Unique local address
 			[[ ${address[$j]} == "2"???":"* ]] && printf "global"	#global address
 			[[ ${address[$j]} == "fe80:"* ]] && printf "link-local" || printf "\t"	#link-local +extra tab for non-link-local
-			printf "\n"	#each type gets 2 tabs, except link-local, which gets 1, due to its length
+			printf "\t"	#each type gets 2 tabs, except link-local, which gets 1, due to its length
 		fi
 		#print IP address
 		echo -e "${address[$j]}"
