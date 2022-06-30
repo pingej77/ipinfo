@@ -39,7 +39,7 @@ done
 #use -b, -br, -brief or --brief to get short answers
 if [[ $1 == "-b"* ]];then
 	tput sgr0
-	ip route | grep "src" | sed -e "s/proto.*src /\n\t\t${fmt_IPv4}/" -e 's/metric.*//' -e "s/.*dev/default if     ${fmt_if}/"
+	ip route | grep -m 1 "src" | sed -e "s/proto.*src /\n\t\t${fmt_IPv4}/" -e 's/metric.*//' -e "s/.*dev/default if     ${fmt_if}/"
 	echo $reset
 	exit 0
 fi
