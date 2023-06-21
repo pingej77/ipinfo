@@ -1,0 +1,207 @@
+#!/bin/bash
+
+if [[ $1 == "--help" ]]; then
+	echo "This program prints network and network interface information"
+	echo -e "Passing no options shows network info and MAC and IP info for each online interface\n"
+	echo "Use b, -b, -br, or --brief to only show basic router and IP address info"
+	echo "Use a, -a, -all, or --all to show all interfaces with DHCP and DNS info"
+	echo "This command does not support multiple switches; they are mutually exclusive."
+	echo -e "\nColors can be easily changed by editing the script file"
+	echo "ip information requires the ip command to be installed."
+	echo "dhcp and dns information requires nmcli to be installed."
+	echo -e "\nThe command makes use of the 'ip' command to fetch the system's IP and MAC address"
+	echo "The DHCP and DNS information is fetched from the dhclient.leases file"
+	echo "The location of this file may vary between distributions, and may not be present at all"
+	echo "if systemd is not in use."
+	exit 0
+fi
+
+
+#the 'brief' command
+if [[ $1 == *"b"* ]];then
+
+	echo -n "IP address: "
+	ip --color route | sed 's/.*src //' | tail -1 | sed 's/metric.*//'
+	ip --color route | sed 's/proto.*//' | head -1
+	echo ""
+	exit 0
+fi
+
+#
+#formatting variables; coloring for different data types
+#
+#colors for link-types (ethernet, Wi-Fi, etc.) are established later, in-context
+reset=$(tput sgr0)	#removes formatting
+fmt_header=$(tput smul;tput bold;tput setaf 67)	#headers are underlined, bold, and cobalt blue
+fmt_lo=$(tput setaf 8)		#loopback is gray
+fmt_IPv4=$(tput setaf 5)	#IPv4 color is purple
+fmt_IPv6=$(tput setaf 4)	#IPv6 color is blue
+fmt_if=$(tput setaf 6)		#interface color is teal
+fmt_MAC=$(tput setaf 11) 	#MAC addr color is yellow
+fmt_DHCP=$(tput setaf 253)	#DHCP and DNS text color is light gray (232-255 are shades of gray)
+fmt_mask=$(tput setaf 153)	#Subnet Mask color is periwinkle
+
+echo $reset
+
+
+#set interface/ip info into variables
+ip_info=$(ip --brief address show | cut -c33-)
+if_info=$(ip --brief link)
+MAC_adr=$(printf "$if_info" | cut -c33- | sed 's/<.*//g')
+line_ct=$(printf "$ip_info\n" | wc -l)
+
+
+##
+#DHCP and DNS fetch
+##
+#break up the leases file by interface, each object of the leases array following the word 'interface'
+tmp=$(cat /var/lib/dhclient/dhclient.leases | sed 's/interface/@/' | sed 's/;//')
+IFS=$'@'
+leases=($tmp)
+IFS=$' '
+gateway=()
+
+#set variables for each lease
+
+for (( i=1; i <= ${#leases[@]}; i++ ))
+do
+	if_name[i]=$(echo ${leases[i]} | head -1 | sed 's/"//'g | xargs)
+	dhcp[i]=$(echo ${leases[i]} | sed -n 's/option dhcp-server-identifier //p' | xargs)
+	gateway[i]=$(echo ${leases[i]} | sed -n 's/option routers //p' | xargs)
+	dns[i]=$(echo ${leases[i]} | sed -n 's/option domain-name-servers //p' | xargs)
+	dns_name[i]=$(echo ${leases[i]} | sed -n 's/option domain-name //p' | xargs)
+	expiry[i]=$(echo ${leases[i]} | sed -n 's/expire [0-9] //p' | xargs)
+	renew[i]=$(echo ${leases[i]} | sed -n 's/renew [0-9] //p' | xargs)
+	rebind[i]=$(echo ${leases[i]} | sed -n 's/rebind [0-9] //p' | xargs)
+done
+
+###
+#interface section
+#prints name, type, status, MAC address and each IP address for each interface
+###
+
+#Header		--spaces, not tabs to keep underline
+echo -e "${fmt_header}Interface:      Link-Type:      Status:"
+#iterate over each interface
+for (( i=2;i <= $line_ct; i++ ))
+do
+	#get status of interface
+	line_stat=$(printf "${if_info}" | sed -n ${i}p | cut -b 8-30 | xargs)
+	#if interface is not 'UP' and 'all' flag is not specifed, skip the interface
+	if [[ $line_stat != *"UP"* ]] && [[ $1 == *"a"* ]]; then
+		(( i++ ))
+		(( $i <= $line_ct ))  && break
+	fi
+	#put each if's IP info in a variable and then put all IP addresses in an array named #address#
+	line_ip=$(printf "$ip_info" | sed -n ${i}p)
+	address=($line_ip)
+	#print interface number (starting at 1)
+	(( --i ))		#decrement and re-increment
+	echo -n $reset
+	tput bold
+	printf "if ${i}\t$reset"	#if #
+	(( i++ ))
+	#print interface name
+	echo -n $fmt_if
+	line_if=$(printf "$if_info" | sed -n ${i}p | cut -b 1-8 | xargs)
+	#print interface type based on systemd naming convention
+	#backwards compatible with old convention for ethernet and Wi-Fi but not others
+	#Says Wi-Fi and cellular, while Zigbee, Z-wave and other technologies could apply
+	echo -n $line_if
+	if [[ $line_if =~ ^en.*|^eth.* ]]; then
+		tput setaf 3			#set the color for ethernet (orange)
+		printf "\tethernet"
+	elif [[ $line_if == "wl"* ]]; then
+		tput setaf 12			#set the color for WLAN/Wi-Fi (light blue)
+		printf "\tWi-Fi\t"
+	elif [[ $line_if == "ww"* ]]; then
+		tput setaf 212			#set the color for WWAN/Cellular network (pink)
+		printf "\tcellular"
+	elif [[ $line_if == "ib"* ]]; then
+		tput setaf 2			#set the color for infiniband (green)
+		printf "\tinfiniband"
+	elif [[ $line_if == "sl"* ]]; then
+		tput setaf 20			#set the color for serial line IP (dark blue)
+		printf "\tserial\t"
+	else
+		printf "\tunknown"
+	fi
+	#format
+	printf "\t"
+	tput bold
+	#format and print status of the interface
+	[[ $line_stat == *"UP"* ]] && tput setaf 2 || tput setaf 9	#UP=Green, otherwise=red
+	echo ${line_stat}$reset
+
+	#print MAC address
+	printf "${fmt_MAC}\tLAN\tMAC address\t"
+	printf "$MAC_adr\n" | sed -n ${i}p
+
+	#prints IP addresses for each if and labels each one according to its type
+	for j in ${!address[@]}
+	do
+		#labelling IPv4 types
+		if [[ ${address[$j]} == *"."* ]]; then
+			printf "${fmt_IPv4}\tIPv4\t"
+			[[ ${address[$j]} == "10."* ]] && printf "private"
+			[[ ${address[$j]} == "192.168."* ]] && printf "private"
+			printf "\t\t"
+		#labelling IPv6 types
+		elif [[ ${address[$j]} == *":"* ]]; then
+			printf "${fmt_IPv6}\tIPv6\t"
+			if [[ ${address[$j]} == "2"???":"* ]];then		#Global Unicast Address
+				printf "global"
+			elif [[ ${address[$j]} == "fc"??":"* ]];then	#ULA (Unique Local Address)
+				printf "private (ULA)" && long=true
+			elif [[ ${address[$j]} == "fd"??":"* ]];then	#ULA range continued
+				printf "private (ULA)" && long=true
+			elif [[ ${address[$j]} == "fe80:"* ]];then		#link-local
+				printf "link-local"; long=true
+			elif [[ ${address[$j]} == "fec0:"* ]];then		#site-local (deprecated)
+				printf "site-local"; long=true
+			elif [[ ${address[$j]} == "ff"??":"* ]];then	#multicast address
+				printf "multicast" && long=true
+			fi
+			[[ $long == true ]] && printf "\t" || printf "\t\t" && long=false	# 1 tab for long text, 2 for short
+		fi
+		#print IP address & format the mask in default color
+		echo -e "${address[$j]}" | sed -e "s#/#${fmt_mask}/#"
+	done
+	
+	#DNS and DHCP information
+	#only if 'all' flag used
+	if [[ $1 == *"a"* ]]
+	then
+		#get and print network ID
+		netID=$(ip route | grep $line_if | sed -e 's/default via.*//' | sed -e 's/dev.*//' | xargs)
+		echo -e $fmt_DHCP"\t\tNetwork ID:$fmt_IPv4\t$netID" | sed -e "s#/#${fmt_mask}/#"
+		#check each DHCP lease for a matching interface name
+		for lease in ${!leases[@]}
+		do
+			if [[ $line_if == ${if_name[lease]} ]]
+			then
+			#print default gateway and all other DHCP and DNS information
+				printf $fmt_DHCP
+				echo -e "\t   Default Gateway:$fmt_IPv4\t${gateway[lease]}"
+				echo -e $fmt_DHCP"\t       DHCP Server:$fmt_IPv4\t${dhcp[lease]}"
+				echo -e $fmt_DHCP"\t     Lease renewal:\t${renew[lease]}"
+				echo -e $fmt_DHCP"\t      Lease rebind:\t${rebind[lease]}"
+				echo -e $fmt_DHCP"\t      Lease expiry:\t${expiry[lease]}"
+				echo -e $fmt_DHCP"\t\t  DNS name:\t${dns_name[lease]}"
+				echo -e $fmt_DHCP"\t       DNS Servers:$fmt_IPv4\t${dns[lease]}" | sed -e 's/,/\n\t\t\t\t/'
+				break
+			fi
+		done
+	fi
+	echo $reset
+done
+
+####
+#Print loopback
+####
+[[ $1 == *"a"* ]] || exit 0
+echo -e -n "${fmt_header}Loopback:${reset}${fmt_lo}\nMAC\t"
+printf "$if_info" | cut -c33- | head -1 | sed 's/<.*//'
+printf "IP\t$ip_info" | head -1 | sed -e 's/ /\t/'
+
+echo $reset
