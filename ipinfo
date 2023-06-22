@@ -88,7 +88,7 @@ do
 	#get status of interface
 	line_stat=$(printf "${if_info}" | sed -n ${i}p | cut -b 8-30 | xargs)
 	#if interface is not 'UP' and 'all' flag is not specifed, skip the interface
-	if [[ $line_stat != *"UP"* ]] && [[ $1 == *"a"* ]]; then
+	if [[ $line_stat != *"UP"* ]] && [[ $1 != *"a"* ]]; then
 		(( i++ ))
 		(( $i <= $line_ct ))  && break
 	fi
